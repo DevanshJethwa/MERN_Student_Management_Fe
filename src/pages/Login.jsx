@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, GraduationCap } from "lucide-react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast, Zoom } from "react-toastify";
 import api from "../api/api";
 
@@ -159,12 +159,12 @@ function Login() {
                   Password*
                 </label>
 
-                <button
-                  type="button"
+                <Link
+                  to="/forgot-password"
                   className="text-[#5B7F46] hover:underline"
                 >
                   Forgot password?
-                </button>
+                </Link>
               </div>
 
               <div className="relative">

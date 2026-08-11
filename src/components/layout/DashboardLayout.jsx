@@ -16,7 +16,8 @@ function DashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="bg-[#e0e0e0] min-h-screen">
+    <div className="w-full flex-1 min-h-0">
+
       {/* Desktop Sidebar */}
       <Sidebar
         menuItems={menuItems}
@@ -27,6 +28,7 @@ function DashboardLayout({
       {/* Mobile Sidebar */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
+
           {/* Overlay */}
           <div
             className="absolute inset-0 bg-black/40"
@@ -45,7 +47,8 @@ function DashboardLayout({
       )}
 
       {/* Main Content */}
-      <div className="lg:ml-64">
+      <div className="lg:ml-64 flex-1 min-h-0 flex flex-col">
+
         <Navbar
           setMobileOpen={setMobileOpen}
           title={title}
@@ -56,9 +59,25 @@ function DashboardLayout({
           onLogout={onLogout}
         />
 
-<main className="ps-3 sm:ps-6 md:ps-10 lg:ps-16 p-3  sm:p-4 md:p-6 lg:p-6 ">
-  {children}
-</main>      </div>
+        {/* Page Content */}
+        <main
+          className="
+            flex-1
+            ps-3
+            sm:ps-6
+            md:ps-10
+            lg:ps-16
+            p-3
+            sm:p-4
+            md:p-6
+            lg:p-6
+            pb-10
+          "
+        >
+          {children}
+        </main>
+
+      </div>
     </div>
   );
 }

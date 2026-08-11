@@ -5,6 +5,8 @@ import { toast, Zoom } from "react-toastify";
 
 import DashboardLayout from "../DashboardLayout";
 import { adminMenu } from "../../../data/adminMenu";
+import Footer from "../Footer";
+import ScrollToTop from "../ScrollToTop";
 
 function AdminDashboardLayout({ children }) {
   const navigate = useNavigate();
@@ -27,42 +29,59 @@ function AdminDashboardLayout({ children }) {
   };
 
   return (
-    <DashboardLayout
-      menuItems={adminMenu}
-      logo={
-        <div className="flex items-center gap-3">
-          <div className=" rounded-xl bg-[#5B7F46]/20 flex items-center justify-center">
-            <img src="/images/Sidebar_School_logo.png" className="w-15 h-15" alt="" />
-          </div>
+  <div className="min-h-screen flex flex-col">
 
-          <div>
-            <h1 className="text-2xl font-bold ">
-              SchoolHub
-            </h1>
+    {/* Dashboard */}
+    <div className="flex-1 min-h-0">
+      <DashboardLayout
+        menuItems={adminMenu}
+        logo={
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-[#5B7F46]/20 flex items-center justify-center">
+              <img
+                src="/images/Sidebar_School_logo.png"
+                className="w-15 h-15"
+                alt=""
+              />
+            </div>
 
-            <p className="text-xs text-gray-400">
-              School Management System
-            </p>
+            <div>
+              <h1 className="text-2xl font-bold">
+                SchoolHub
+              </h1>
+
+              <p className="text-xs text-gray-400">
+                School Management System
+              </p>
+            </div>
           </div>
-        </div>
-      }
-      title={
-        <>
-          Admin{" "}
-          <span className="text-[#5B7F46]">
-            Dashboard
-          </span>
-        </>
-      }
-      HeaderIcon={UserStar}
-      initial="A"
-      name="Super Admin"
-      email="admin@system.com"
-      onLogout={handleLogout}
-    >
-      {children}
-    </DashboardLayout>
-  );
+        }
+        title={
+          <>
+            Admin{" "}
+            <span className="text-[#5B7F46]">
+              Dashboard
+            </span>
+          </>
+        }
+        HeaderIcon={UserStar}
+        initial="A"
+        name="Super Admin"
+        email="admin@system.com"
+        onLogout={handleLogout}
+      >
+        {children}
+      </DashboardLayout>
+    </div>
+
+    {/* Footer */}
+    <Footer />
+
+    {/* Scroll To Top */}
+    <ScrollToTop />
+
+  </div>
+);
 }
 
 export default AdminDashboardLayout;

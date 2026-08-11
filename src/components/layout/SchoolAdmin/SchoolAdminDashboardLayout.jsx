@@ -1,10 +1,12 @@
 import React from "react";
-import { School, GraduationCap } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast, Zoom } from "react-toastify";
 
 import DashboardLayout from "../DashboardLayout";
 import { schoolAdminMenu } from "../../../data/schoolAdminMenu";
+import Footer from "../Footer";
+import ScrollToTop from "../ScrollToTop";
 
 function SchoolAdminDashboardLayout({ children }) {
   const navigate = useNavigate();
@@ -29,41 +31,58 @@ function SchoolAdminDashboardLayout({ children }) {
   };
 
   return (
-    <DashboardLayout
-      menuItems={schoolAdminMenu}
-      logo={
-        <div className="flex items-center gap-3">
-          <div className=" rounded-xl bg-[#5B7F46]/20 flex items-center justify-center">
-            <img src="/images/Sidebar_School_logo.png" className="w-15 h-15" alt="" />
-          </div>
+    <div className="min-h-screen flex flex-col">
 
-          <div>
-            <h1 className="text-2xl font-bold ">
-              SchoolHub
-            </h1>
+      {/* Dashboard */}
+      <div className="flex-1">
+        <DashboardLayout
+          menuItems={schoolAdminMenu}
+          logo={
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-[#5B7F46]/20 flex items-center justify-center">
+              <img
+                src="/images/Sidebar_School_logo.png"
+                className="w-15 h-15"
+                alt=""
+              />
+            </div>
 
-            <p className="text-xs text-gray-400">
-              School Management System
-            </p>
+            <div>
+              <h1 className="text-2xl font-bold">
+                SchoolHub
+              </h1>
+
+              <p className="text-xs text-gray-400">
+                School Management System
+              </p>
+            </div>
           </div>
-        </div>
-      }
-      title={
-        <>
-          School Admin{" "}
-          <span className="text-[#5B7F46]">
-            Dashboard
-          </span>
-        </>
-      }
-      HeaderIcon={GraduationCap}
-      initial="S"
-      name="School Admin"
-      email="schooladmin@gmail.com"
-      onLogout={handleLogout}
-    >
-      {children}
-    </DashboardLayout>
+        }
+          title={
+            <>
+              School Admin{" "}
+              <span className="text-[#5B7F46]">
+                Dashboard
+              </span>
+            </>
+          }
+          HeaderIcon={GraduationCap}
+          initial="S"
+          name="School Admin"
+          email="schooladmin@gmail.com"
+          onLogout={handleLogout}
+        >
+          {children}
+        </DashboardLayout>
+      </div>
+
+      {/* Footer */}
+      <Footer />
+
+      {/* Scroll To Top */}
+      <ScrollToTop />
+
+    </div>
   );
 }
 

@@ -13,6 +13,7 @@ import {
   FileText,
   Download,
   ChevronDown,
+  Search,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../api/api";
@@ -39,6 +40,54 @@ function StaffSalary() {
 
   const [openExport, setOpenExport] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [paymentHistory, setPaymentHistory] = useState([]);
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredPayments = paymentHistory.filter((payment) => {
+    const search = searchQuery.toLowerCase().trim();
+
+    const salaryMonth = payment.SalaryMonth
+      ? new Date(payment.SalaryMonth)
+          .toLocaleDateString("en-IN", {
+            month: "long",
+            year: "numeric",
+          })
+          .toLowerCase()
+      : "";
+
+    const amount = payment.Amount ? String(payment.Amount).toLowerCase() : "";
+
+    const paymentDate = payment.PaymentDate
+      ? new Date(payment.PaymentDate)
+          .toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })
+          .toLowerCase()
+      : "";
+
+    return (
+      !search ||
+      salaryMonth.includes(search) ||
+      amount.includes(search) ||
+      paymentDate.includes(search)
+    );
+  });
+
+  const recordsPerPage = 5;
+
+  const totalPages = Math.ceil(paymentHistory.length / recordsPerPage);
+
+  const startIndex = (currentPage - 1) * recordsPerPage;
+
+  const currentPayments = paymentHistory.slice(
+    startIndex,
+    startIndex + recordsPerPage,
+  );
+
   const handleDownload = (type) => {
     console.log("Download", type);
     setOpenExport(false);
@@ -55,7 +104,6 @@ function StaffSalary() {
   const [paymentType, setPaymentType] = useState("Monthly");
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
   const [isSalaryPaid, setIsSalaryPaid] = useState(false);
-
 
   const netSalary =
     Number(salaryAmount || 0) + Number(allowance || 0) - Number(deduction || 0);
@@ -78,20 +126,22 @@ function StaffSalary() {
       // setSalaryData(response.data.salary);
       setstaffData(response.data.salary);
       console.log("Staff Salarty Detail : ", response.data.salary);
-      
-      if (response.data.salary.salaSalaryId > 0 || response.data.salary.salaSalaryId != 0) {
+
+      if (
+        response.data.salary.salaSalaryId > 0 ||
+        response.data.salary.salaSalaryId != 0
+      ) {
         setIsSalaryPaid(true);
       }
 
       // setIsSalaryPaid(response.data.salary.PaymentStatus === "Paid");
       console.log("Is Salary Paid : ", isSalaryPaid);
-
     } catch (error) {
       console.log(error);
     }
   };
 
-  console.log("Is salary paid : ", isSalaryPaid)
+  console.log("Is salary paid : ", isSalaryPaid);
 
   const isSalaryAssigned = staffData?.SalaryId !== null;
 
@@ -150,72 +200,62 @@ function StaffSalary() {
     }
   };
 
-  
-const handleUpdateSalary = async () => {
-  try {
-    if (!salaryAmount) {
-      alert("Please enter basic salary");
-      return;
+  const handleUpdateSalary = async () => {
+    try {
+      if (!salaryAmount) {
+        alert("Please enter basic salary");
+        return;
+      }
+
+      if (!effectiveFrom) {
+        alert("Please select effective from date");
+        return;
+      }
+
+      const salaryData = {
+        salaryamount: Number(salaryAmount),
+        allowance: Number(allowance || 0),
+        deduction: Number(deduction || 0),
+        paymenttype: paymentType,
+        paymentmethod: paymentMethod,
+        effectivefrom: effectiveFrom
+          ? new Date(effectiveFrom).toISOString().split("T")[0]
+          : "",
+      };
+
+      console.log("Update Salary Data:", salaryData);
+
+      const response = await api.put(`/salary/updateSalary/${id}`, salaryData);
+
+      console.log("Update API Response:", response.data);
+
+      alert("Salary updated successfully");
+
+      // Close update form
+      setShowSalaryForm(false);
+
+      // Refresh salary data
+      await getStaffSalary(id);
+
+      // Reset form
+      setSalaryAmount("");
+      setAllowance("");
+      setDeduction("");
+      setEffectiveFrom("");
+      setPaymentType("Monthly");
+      setPaymentMethod("Bank Transfer");
+    } catch (error) {
+      console.error("Update Salary Error:", error);
+
+      console.error("Backend Error:", error.response?.data);
+
+      alert(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Failed to update salary",
+      );
     }
-
-    if (!effectiveFrom) {
-      alert("Please select effective from date");
-      return;
-    }
-
-    const salaryData = {
-      salaryamount: Number(salaryAmount),
-      allowance: Number(allowance || 0),
-      deduction: Number(deduction || 0),
-      paymenttype: paymentType,
-      paymentmethod: paymentMethod,
-      effectivefrom: effectiveFrom
-        ? new Date(effectiveFrom).toISOString().split("T")[0]
-        : "",
-    };
-
-    console.log("Update Salary Data:", salaryData);
-
-    const response = await api.put(
-      `/salary/updateSalary/${id}`,
-      salaryData
-    );
-
-    console.log("Update API Response:", response.data);
-
-    alert("Salary updated successfully");
-
-    // Close update form
-    setShowSalaryForm(false);
-
-    // Refresh salary data
-    await getStaffSalary(id);
-
-    // Reset form
-    setSalaryAmount("");
-    setAllowance("");
-    setDeduction("");
-    setEffectiveFrom("");
-    setPaymentType("Monthly");
-    setPaymentMethod("Bank Transfer");
-
-  } catch (error) {
-    console.error("Update Salary Error:", error);
-
-    console.error(
-      "Backend Error:",
-      error.response?.data
-    );
-
-    alert(
-      error.response?.data?.error ||
-        error.response?.data?.message ||
-        "Failed to update salary"
-    );
-  }
-};
-
-
+  };
 
   const handlePaySalary = async () => {
     try {
@@ -318,61 +358,44 @@ const handleUpdateSalary = async () => {
     }
   };
 
-  const [paymentHistory, setPaymentHistory] = useState([]);
-
   const getPaymentHistory = async (staffId) => {
-  try {
-    const response = await api.get(
-      `/salary/payment-history/${staffId}`
+    try {
+      const response = await api.get(`/salary/payment-history/${staffId}`);
+
+      console.log("Payment History:", response.data);
+
+      setPaymentHistory(response.data.payments || []);
+    } catch (error) {
+      console.log("Payment History Error:", error);
+    }
+  };
+
+  const handleOpenUpdateSalary = () => {
+    setSalaryAmount(
+      staffData?.SalaryAmount !== null && staffData?.SalaryAmount !== undefined
+        ? Number(staffData.SalaryAmount)
+        : "",
     );
 
-    console.log(
-      "Payment History:",
-      response.data
+    setAllowance(
+      staffData?.Allowance !== null && staffData?.Allowance !== undefined
+        ? Number(staffData.Allowance)
+        : "",
     );
 
-    setPaymentHistory(
-      response.data.payments || []
+    setDeduction(
+      staffData?.Deduction !== null && staffData?.Deduction !== undefined
+        ? Number(staffData.Deduction)
+        : "",
     );
 
-  } catch (error) {
-    console.log(
-      "Payment History Error:",
-      error
-    );
-  }
-};
+    setEffectiveFrom(staffData?.EffectiveFrom || "");
 
-const handleOpenUpdateSalary = () => {
-  setSalaryAmount(
-    staffData?.SalaryAmount !== null && staffData?.SalaryAmount !== undefined
-      ? Number(staffData.SalaryAmount)
-      : ""
-  );
+    setPaymentMethod(staffData?.PaymentMethod);
+    setPaymentType(staffData?.PaymentType);
 
-  setAllowance(
-    staffData?.Allowance !== null && staffData?.Allowance !== undefined
-      ? Number(staffData.Allowance)
-      : ""
-  );
-
-  setDeduction(
-    staffData?.Deduction !== null && staffData?.Deduction !== undefined
-      ? Number(staffData.Deduction)
-      : ""
-  );
-
-  setEffectiveFrom(staffData?.EffectiveFrom || "")
-
-  setPaymentMethod(staffData?.PaymentMethod)
-  setPaymentType(staffData?.PaymentType)
-
-  setShowSalaryForm(true);
-};
-
-
-
-
+    setShowSalaryForm(true);
+  };
 
   useEffect(() => {
     // getStaffById(id);
@@ -629,7 +652,7 @@ const handleOpenUpdateSalary = () => {
                   </p>
                 </div>
               </div>
-<div className="bg-white rounded-2xl border border-gray-200 mt-8 overflow-hidden">
+              <div className="bg-white rounded-2xl border border-gray-200 mt-8 overflow-hidden">
 
   {/* Header */}
   <div className="px-6 py-5 border-b border-gray-200">
@@ -655,7 +678,7 @@ const handleOpenUpdateSalary = () => {
   </div>
 
 
-  {/* Empty State */}
+  {/* No Payment History */}
   {paymentHistory.length === 0 ? (
 
     <div className="py-16 text-center">
@@ -679,233 +702,507 @@ const handleOpenUpdateSalary = () => {
 
   ) : (
 
-    <div className="p-5 overflow-x-auto">
-
-      <table className="w-full border-separate border-spacing-y-3">
-
-        {/* Header */}
-
-        <thead>
-
-          <tr>
-
-            <th className="px-5  py-3 text-left text-xs font-bold text-gray-400 uppercase">
-              #
-            </th>
-
-            <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase">
-              Salary Month
-            </th>
-
-            <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase">
-              Amount
-            </th>
-
-            <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase">
-              Payment Date
-            </th>
-
-            <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase">
-              Status
-            </th>
-
-            <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase">
-              Transaction ID
-            </th>
-
-          </tr>
-
-        </thead>
-
-
-        {/* Body */}
-
-        <tbody>
-
-          {paymentHistory.map((payment, index) => (
-
-            <tr
-              key={payment.SalaryPaymentId}
-              className="group bg-gray-50 hover:bg-[#F5F9F3] transition"
-            >
-
-              {/* Number */}
-
-              <td className="px-5 py-4 rounded-l-xl">
-
-                <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center">
-
-                  <span className="text-sm font-semibold text-gray-600">
-                    {index + 1}
-                  </span>
-
-                </div>
-
-              </td>
-
-
-              {/* Salary Month */}
-
-              <td className="px-5 py-4">
-
-                <div className="flex items-center gap-3">
-
-                  <div className="w-10 h-10 rounded-xl bg-[#EAF0E6] flex items-center justify-center">
-
-                    <IndianRupee
-                      size={18}
-                      className="text-[#5B7F46]"
-                    />
-
-                  </div>
-
-                  <div>
-
-                    <p className="font-semibold text-gray-800">
-
-                      {payment.SalaryMonth
-                        ? new Date(
-                            payment.SalaryMonth
-                          ).toLocaleDateString(
-                            "en-IN",
-                            {
-                              month: "long",
-                              year: "numeric",
-                            }
-                          )
-                        : "-"
-                      }
-
-                    </p>
-
-                    <p className="text-xs text-gray-400 mt-1">
-                      Monthly Salary
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </td>
-
-
-              {/* Amount */}
-
-              <td className="px-5 py-4">
-
-                <p className="font-bold text-gray-800">
-
-                  ₹
-                  {Number(
-                    payment.Amount
-                  ).toLocaleString("en-IN")}
-
-                </p>
-
-              </td>
-
-
-              {/* Payment Date */}
-
-              <td className="px-5 py-4">
-
-                <div>
-
-                  <p className="text-sm font-semibold text-gray-700">
-
-                    {new Date(
-                      payment.PaymentDate
-                    ).toLocaleDateString(
-                      "en-IN",
-                      {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      }
-                    )}
-
-                  </p>
-
-                  <p className="text-xs text-gray-400 mt-1">
-
-                    {new Date(
-                      payment.PaymentDate
-                    ).toLocaleTimeString(
-                      "en-IN",
-                      {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }
-                    )}
-
-                  </p>
-
-                </div>
-
-              </td>
-
-
-              {/* Status */}
-
-              <td className="px-5 py-4">
-
-                {payment.PaymentStatus === "Paid" ? (
-
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
-
-                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
-
-                    Paid
-
-                  </span>
-
-                ) : (
-
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
-
-                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
-
-                    {payment.PaymentStatus}
-
-                  </span>
-
-                )}
-
-              </td>
-
-
-              {/* Transaction ID */}
-
-              <td className="px-5 py-4 rounded-r-xl">
-
-                <div className="flex items-center gap-2">
-
-                  <div className="min-w-0">
-
-                    <p
-                      className="text-xs font-mono font-semibold text-gray-600 truncate max-w-[170px]"
-                      title={payment.RazorpayPaymentId}
+    /* Payments Exist */
+    <div className="p-5">
+
+      {/* Search */}
+      <div className="mb-5">
+        <div className="relative w-full max-w-md">
+
+          <Search
+            size={20}
+            className="
+              absolute
+              left-4
+              top-1/2
+              -translate-y-1/2
+              text-gray-400
+            "
+          />
+
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder="Search salary month, amount or payment date..."
+            className="
+              w-full
+              pl-12
+              pr-4
+              py-3
+              rounded-xl
+              border
+              border-gray-200
+              bg-white
+              text-sm
+              text-gray-700
+              outline-none
+              transition-all
+              focus:border-[#5B7F46]
+              focus:ring-4
+              focus:ring-[#5B7F46]/10
+            "
+          />
+
+        </div>
+      </div>
+
+
+      {/* Search Result */}
+      {filteredPayments.length === 0 ? (
+
+        <div className="py-16 text-center">
+
+          <div
+            className="
+              w-16
+              h-16
+              mx-auto
+              rounded-2xl
+              bg-[#F3F7F0]
+              flex
+              items-center
+              justify-center
+            "
+          >
+            <Search
+              size={26}
+              className="text-[#5B7F46]"
+            />
+          </div>
+
+          <h3 className="mt-4 text-lg font-semibold text-gray-700">
+            Data not found
+          </h3>
+
+          <p className="text-sm text-gray-500 mt-1">
+            No payment records match your search.
+          </p>
+
+        </div>
+
+      ) : (
+
+        /* Table */
+        <div className="overflow-x-auto">
+
+          <table className="w-full border-separate border-spacing-y-3">
+
+            {/* Header */}
+            <thead>
+              <tr>
+
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase">
+                  #
+                </th>
+
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase">
+                  Salary Month
+                </th>
+
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase">
+                  Amount
+                </th>
+
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase">
+                  Payment Date
+                </th>
+
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase">
+                  Status
+                </th>
+
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase">
+                  Transaction ID
+                </th>
+
+              </tr>
+            </thead>
+
+
+            {/* Body */}
+            <tbody>
+
+              {filteredPayments.map((payment, index) => (
+
+                <tr
+                  key={payment.SalaryPaymentId}
+                  className="
+                    group
+                    bg-gray-50
+                    hover:bg-[#F5F9F3]
+                    transition
+                  "
+                >
+
+                  {/* Number */}
+                  <td className="px-5 py-4 rounded-l-xl">
+
+                    <div
+                      className="
+                        w-8
+                        h-8
+                        rounded-lg
+                        bg-white
+                        border
+                        border-gray-200
+                        flex
+                        items-center
+                        justify-center
+                      "
                     >
-                      {payment.RazorpayPaymentId}
+                      <span className="text-sm font-semibold text-gray-600">
+                        {startIndex + index + 1}
+                      </span>
+                    </div>
+
+                  </td>
+
+
+                  {/* Salary Month */}
+                  <td className="px-5 py-4">
+
+                    <div className="flex items-center gap-3">
+
+                      <div
+                        className="
+                          w-10
+                          h-10
+                          rounded-xl
+                          bg-[#EAF0E6]
+                          flex
+                          items-center
+                          justify-center
+                        "
+                      >
+                        <IndianRupee
+                          size={18}
+                          className="text-[#5B7F46]"
+                        />
+                      </div>
+
+                      <div>
+
+                        <p className="font-semibold text-gray-800">
+
+                          {payment.SalaryMonth
+                            ? new Date(
+                                payment.SalaryMonth
+                              ).toLocaleDateString(
+                                "en-IN",
+                                {
+                                  month: "long",
+                                  year: "numeric",
+                                }
+                              )
+                            : "-"
+                          }
+
+                        </p>
+
+                        <p className="text-xs text-gray-400 mt-1">
+                          Monthly Salary
+                        </p>
+
+                      </div>
+
+                    </div>
+
+                  </td>
+
+
+                  {/* Amount */}
+                  <td className="px-5 py-4">
+
+                    <p className="font-bold text-gray-800">
+                      ₹
+                      {Number(
+                        payment.Amount
+                      ).toLocaleString("en-IN")}
                     </p>
 
-                    <p className="text-[11px] text-gray-400 mt-1">
-                      Razorpay Transaction
-                    </p>
+                  </td>
 
-                  </div>
+
+                  {/* Payment Date */}
+                  <td className="px-5 py-4">
+
+                    <div>
+
+                      <p className="text-sm font-semibold text-gray-700">
+
+                        {new Date(
+                          payment.PaymentDate
+                        ).toLocaleDateString(
+                          "en-IN",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          }
+                        )}
+
+                      </p>
+
+                      <p className="text-xs text-gray-400 mt-1">
+
+                        {new Date(
+                          payment.PaymentDate
+                        ).toLocaleTimeString(
+                          "en-IN",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+
+                      </p>
+
+                    </div>
+
+                  </td>
+
+
+                  {/* Status */}
+                  <td className="px-5 py-4">
+
+                    {payment.PaymentStatus === "Paid" ? (
+
+                      <span
+                        className="
+                          inline-flex
+                          items-center
+                          gap-2
+                          px-3
+                          py-1.5
+                          rounded-full
+                          bg-green-100
+                          text-green-700
+                          text-xs
+                          font-semibold
+                        "
+                      >
+                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                        Paid
+                      </span>
+
+                    ) : (
+
+                      <span
+                        className="
+                          inline-flex
+                          items-center
+                          gap-2
+                          px-3
+                          py-1.5
+                          rounded-full
+                          bg-red-100
+                          text-red-700
+                          text-xs
+                          font-semibold
+                        "
+                      >
+                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
+
+                        {payment.PaymentStatus}
+
+                      </span>
+
+                    )}
+
+                  </td>
+
+
+                  {/* Transaction ID */}
+                  <td className="px-5 py-4 rounded-r-xl">
+
+                    <div className="flex items-center gap-2">
+
+                      <div className="min-w-0">
+
+                        <p
+                          className="
+                            text-xs
+                            font-mono
+                            font-semibold
+                            text-gray-600
+                            truncate
+                            max-w-[170px]
+                          "
+                          title={payment.RazorpayPaymentId}
+                        >
+                          {payment.RazorpayPaymentId}
+                        </p>
+
+                        <p className="text-[11px] text-gray-400 mt-1">
+                          Razorpay Transaction
+                        </p>
+
+                      </div>
+
+                    </div>
+
+                  </td>
+
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
+
+
+          {/* Pagination */}
+          {filteredPayments.length > 0 && (
+
+            <div className="mt-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+
+              {/* Records Information */}
+              <p className="text-sm text-gray-500">
+
+                Showing{" "}
+
+                <span className="font-semibold text-gray-700">
+                  {startIndex + 1}
+                </span>
+
+                {" "}to{" "}
+
+                <span className="font-semibold text-gray-700">
+                  {Math.min(
+                    startIndex + recordsPerPage,
+                    filteredPayments.length
+                  )}
+                </span>
+
+                {" "}of{" "}
+
+                <span className="font-semibold text-gray-700">
+                  {filteredPayments.length}
+                </span>
+
+                {" "}payments
+
+              </p>
+
+
+              {/* Pagination Buttons */}
+              <div className="flex items-center gap-2">
+
+                {/* Previous */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((prev) =>
+                      Math.max(prev - 1, 1)
+                    )
+                  }
+                  disabled={currentPage === 1}
+                  className="
+                    px-4
+                    py-2
+                    rounded-xl
+                    border
+                    border-gray-200
+                    bg-white
+                    text-sm
+                    font-semibold
+                    text-gray-600
+                    transition-all
+                    duration-200
+                    hover:bg-[#F3F8F1]
+                    hover:text-[#5B7F46]
+                    disabled:opacity-40
+                    disabled:cursor-not-allowed
+                  "
+                >
+                  Previous
+                </button>
+
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+
+                  {Array.from(
+                    { length: totalPages },
+                    (_, index) => index + 1
+                  ).map((page) => (
+
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`
+                        w-9
+                        h-9
+                        
+                        rounded-xl
+                        text-sm
+                        font-semibold
+                        transition-all
+                        duration-200
+
+                        ${
+                          currentPage === page
+                            ? "bg-[#5B7F46] text-white shadow-sm"
+                            : "bg-white text-gray-600 hover:bg-[#F3F8F1] hover:text-[#5B7F46]"
+                        }
+                      `}
+                    >
+                      {page}
+                    </button>
+
+                  ))}
 
                 </div>
 
-              </td>
 
-            </tr>
+                {/* Next */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((prev) =>
+                      Math.min(
+                        prev + 1,
+                        totalPages
+                      )
+                    )
+                  }
+                  disabled={currentPage === totalPages}
+                  className="
+                    px-4
+                    py-2
+                    rounded-xl
+                    border
+                    border-gray-200
+                    bg-white
+                    text-sm
+                    font-semibold
+                    text-gray-600
+                    transition-all
+                    duration-200
+                    hover:bg-[#F3F8F1]
+                    hover:text-[#5B7F46]
+                    disabled:opacity-40
+                    disabled:cursor-not-allowed
+                  "
+                >
+                  Next
+                </button>
 
-          ))}
+              </div>
 
-        </tbody>
+            </div>
 
-      </table>
+          )}
+
+        </div>
+
+      )}
 
     </div>
 
@@ -914,39 +1211,34 @@ const handleOpenUpdateSalary = () => {
 </div>
 
               <div className="flex flex-col sm:flex-row justify-end gap-4 mt-6">
+                {/* Back Button */}
+                <button
+                  onClick={() => navigate(-1)}
+                  className="border border-[#5B7F46] text-[#5B7F46] hover:bg-[#EEF5EA] px-8 py-3 rounded-xl font-semibold text-sm transition cursor-pointer"
+                >
+                  Back
+                </button>
 
-  {/* Back Button */}
-  <button
-    onClick={() => navigate(-1)}
-    className="border border-[#5B7F46] text-[#5B7F46] hover:bg-[#EEF5EA] px-8 py-3 rounded-xl font-semibold text-sm transition cursor-pointer"
-  >
-    Back
-  </button>
+                {/* Update Salary */}
+                <button
+                  onClick={handleOpenUpdateSalary}
+                  className="bg-[#5B7F46] hover:bg-[#49673A] text-white px-8 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition cursor-pointer"
+                >
+                  <Pencil size={18} />
+                  Update Salary
+                </button>
 
- 
-    
-      {/* Update Salary */}
-      <button
-      onClick={handleOpenUpdateSalary}
-        className="bg-[#5B7F46] hover:bg-[#49673A] text-white px-8 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition cursor-pointer"
-      >
-        <Pencil size={18} />
-        Update Salary
-      </button>
+                {/* Pay Salary */}
+                <button
+                  onClick={handlePaySalary}
+                  className="bg-[#5B7F46] hover:bg-[#49673A] text-white px-8 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition cursor-pointer"
+                >
+                  <IndianRupee size={18} />
+                  Pay Salary
+                </button>
 
-      {/* Pay Salary */}
-      <button
-        onClick={handlePaySalary}
-        className="bg-[#5B7F46] hover:bg-[#49673A] text-white px-8 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition cursor-pointer"
-      >
-        <IndianRupee size={18} />
-        Pay Salary
-      </button>
-    
-  
-
-     {/* Salary Paid State */}
-    {/* <div className="flex items-center gap-3 px-6 py-3 rounded-xl bg-[#EEF7EA] border border-[#CFE3C7]">
+                {/* Salary Paid State */}
+                {/* <div className="flex items-center gap-3 px-6 py-3 rounded-xl bg-[#EEF7EA] border border-[#CFE3C7]">
 
       
       <div className="w-9 h-9 rounded-full bg-[#5B7F46] flex items-center justify-center">
@@ -977,14 +1269,11 @@ const handleOpenUpdateSalary = () => {
       </div>
 
     </div> */}
-
- 
-
-</div>
+              </div>
             </>
           ) : (
             <>
-              { !isSalaryAssigned && !showSalaryForm ?(
+              {!isSalaryAssigned && !showSalaryForm ? (
                 <>
                   <div
                     className="
@@ -1143,21 +1432,18 @@ const handleOpenUpdateSalary = () => {
                 <>
                   <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8">
                     <div className="mb-7">
-                      
-<h2 className="text-2xl font-bold text-gray-800">
-  {isSalaryAssigned ? "Update Salary" : "Assign Salary"}
-</h2>
+                      <h2 className="text-2xl font-bold text-gray-800">
+                        {isSalaryAssigned ? "Update Salary" : "Assign Salary"}
+                      </h2>
 
-<p className="text-sm text-gray-500 mt-1">
-  {isSalaryAssigned
-    ? "Update the salary structure for"
-    : "Set the salary structure for"}{" "}
-  <span className="font-semibold text-gray-700">
-    {staffData?.FirstName} {staffData?.LastName}
-  </span>
-</p>
-
-
+                      <p className="text-sm text-gray-500 mt-1">
+                        {isSalaryAssigned
+                          ? "Update the salary structure for"
+                          : "Set the salary structure for"}{" "}
+                        <span className="font-semibold text-gray-700">
+                          {staffData?.FirstName} {staffData?.LastName}
+                        </span>
+                      </p>
                     </div>
 
                     {/* Salary Fields */}
@@ -1383,10 +1669,13 @@ const handleOpenUpdateSalary = () => {
                         Cancel
                       </button>
 
-                      
-<button
-  onClick={isSalaryAssigned ? handleUpdateSalary : handleAssignSalary}
-  className="
+                      <button
+                        onClick={
+                          isSalaryAssigned
+                            ? handleUpdateSalary
+                            : handleAssignSalary
+                        }
+                        className="
     px-6
     py-3
     rounded-xl
@@ -1398,20 +1687,19 @@ const handleOpenUpdateSalary = () => {
     items-center
     gap-2
   "
->
-  {isSalaryAssigned ? (
-    <>
-      <Pencil size={18} />
-      Update Salary
-    </>
-  ) : (
-    <>
-      <IndianRupee size={18} />
-      Assign Salary
-    </>
-  )}
-</button>
-
+                      >
+                        {isSalaryAssigned ? (
+                          <>
+                            <Pencil size={18} />
+                            Update Salary
+                          </>
+                        ) : (
+                          <>
+                            <IndianRupee size={18} />
+                            Assign Salary
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </>

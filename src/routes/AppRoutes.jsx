@@ -12,6 +12,8 @@ import AdminStaff from "../pages/SuperAdmin/AdminStaff";
 import AddStaff from "../pages/SchoolAdmin/AddStaff";
 import SchoolAdmin_Staff from "../pages/SchoolAdmin/SchoolAdmin_Staff";
 import StaffSalary from "../pages/SchoolAdmin/StaffSalary";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import ResetPassword from "../pages/auth/ResetPassword";
 
 function AppRoutes() {
   return (
@@ -73,10 +75,14 @@ function AppRoutes() {
           }
         />
 
-        <Route path="/school-admin/staff/edit/:id" element={
-          <ProtectedRoute allowedRole="2">
+        <Route
+          path="/school-admin/staff/edit/:id"
+          element={
+            <ProtectedRoute allowedRole="2">
               <AddStaff />
-            </ProtectedRoute>} />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/school-admin/staff"
@@ -94,7 +100,10 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-       
+
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Routes>
     </BrowserRouter>
   );
