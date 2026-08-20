@@ -16,7 +16,7 @@ function DashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="w-full flex-1 min-h-0">
+    <div className="w-full flex-1 min-h-0 bg-[#e4e4e4]">
 
       {/* Desktop Sidebar */}
       <Sidebar
@@ -62,6 +62,7 @@ function DashboardLayout({
         {/* Page Content */}
         <main
           className="
+          bg-[#dedede]
             flex-1
             ps-3
             sm:ps-6

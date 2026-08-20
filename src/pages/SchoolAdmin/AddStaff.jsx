@@ -155,6 +155,8 @@ const AddStaff = () => {
       console.log(confirmPassword);
       console.log(school);
 
+      console.log("Token:", token);
+
       const response = await api.post(
         "/staff/addStaff",
         {
@@ -179,7 +181,9 @@ const AddStaff = () => {
         resetForm();
       }
     } catch (error) {
-      console.log(error);
+      console.log("Status:", error.response?.status);
+      console.log("Backend Message:", error.response?.data);
+      console.log("Full Error:", error);
     }
   };
 
@@ -229,48 +233,43 @@ const AddStaff = () => {
   //   }
   // };
 
-
   const getStaffById = async () => {
-  try {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    console.log("Id:", id);
+      console.log("Id:", id);
 
-    const response = await api.get(`/staff/getStaffById/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const response = await api.get(`/staff/getStaffById/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    const staff = response.data.Staff[0];
+      const staff = response.data.Staff[0];
 
-    console.log("Staff By id:", staff);
+      console.log("Staff By id:", staff);
 
-    // Find Role ID from Role Name
-    const selectedRole = roles.find(
-      (item) => item.RoleName === staff.Role
-    );
+      // Find Role ID from Role Name
+      const selectedRole = roles.find((item) => item.RoleName === staff.Role);
 
-    // Find Department ID from Department Name
-    const selectedDepartment = departments.find(
-      (item) => item.DepartmentName === staff.Department
-    );
+      // Find Department ID from Department Name
+      const selectedDepartment = departments.find(
+        (item) => item.DepartmentName === staff.Department,
+      );
 
-    setFirstName(staff.FirstName || "");
-    setLastName(staff.LastName || "");
-    setEmail(staff.Email || "");
-    setPhone(staff.Phone || "");
+      setFirstName(staff.FirstName || "");
+      setLastName(staff.LastName || "");
+      setEmail(staff.Email || "");
+      setPhone(staff.Phone || "");
 
-    // Set IDs because select option values are IDs
-    setRole(String(selectedRole?.RoleId || ""));
-    setDepartment(String(selectedDepartment?.DepartmentId || ""));
-    setSchool(String(staff.SchoolId || ""));
-
-    
-  } catch (error) {
-    console.log(error);
-  }
-};
+      // Set IDs because select option values are IDs
+      setRole(String(selectedRole?.RoleId || ""));
+      setDepartment(String(selectedDepartment?.DepartmentId || ""));
+      setSchool(String(staff.SchoolId || ""));
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const editStaff = async () => {
     try {
@@ -282,8 +281,8 @@ const AddStaff = () => {
           roleid: role,
           firstname: firstName,
           lastname: lastName,
-          email:email,
-          phone:phone,
+          email: email,
+          phone: phone,
           departmentid: department,
         },
         {
@@ -292,7 +291,7 @@ const AddStaff = () => {
           },
         },
       );
-      if(response.status === 200){
+      if (response.status === 200) {
         toast.success(response.data.message);
         navigate("/school-admin/staff");
         resetForm();
@@ -305,21 +304,20 @@ const AddStaff = () => {
   useEffect(() => {
     if (id) {
       getStaffById();
-    }else {
-    resetForm();
-  }
+    } else {
+      resetForm();
+    }
   }, [id]);
 
-
   useEffect(() => {
-  if (id && roles.length > 0 && departments.length > 0) {
-    getStaffById();
-  }
+    if (id && roles.length > 0 && departments.length > 0) {
+      getStaffById();
+    }
 
-  if (!id) {
-    resetForm();
-  }
-}, [id, roles, departments]);
+    if (!id) {
+      resetForm();
+    }
+  }, [id, roles, departments]);
 
   return (
     <section className="bg-[#E9E9E9] min-h-screen">
@@ -432,7 +430,9 @@ const AddStaff = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 ">Phone</label>
+              <label className="text-sm font-medium text-gray-700 ">
+                Phone
+              </label>
 
               <input
                 type="text"
@@ -602,70 +602,70 @@ const AddStaff = () => {
           {/* Security */}
 
           {!isEdit && (
-  <>
-    <h2 className="text-lg font-semibold text-[#5B7F46] mb-4 mt-8">
-      Security
-    </h2>
+            <>
+              <h2 className="text-lg font-semibold text-[#5B7F46] mb-4 mt-8">
+                Security
+              </h2>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Password */}
-      <div>
-        <label className="text-sm font-medium text-gray-700">
-          Password
-        </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Password */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Password
+                  </label>
 
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
 
-            setErrors((prev) => ({
-              ...prev,
-              password: "",
-            }));
-          }}
-          placeholder="Enter password"
-          className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3"
-        />
+                      setErrors((prev) => ({
+                        ...prev,
+                        password: "",
+                      }));
+                    }}
+                    placeholder="Enter password"
+                    className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3"
+                  />
 
-        {errors.password && (
-          <p className="text-red-500 text-sm mt-1">
-            {errors.password}
-          </p>
-        )}
-      </div>
+                  {errors.password && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.password}
+                    </p>
+                  )}
+                </div>
 
-      {/* Confirm Password */}
-      <div>
-        <label className="text-sm font-medium text-gray-700">
-          Confirm Password
-        </label>
+                {/* Confirm Password */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Confirm Password
+                  </label>
 
-        <input
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => {
-            setConfirmPassword(e.target.value);
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
 
-            setErrors((prev) => ({
-              ...prev,
-              confirmPassword: "",
-            }));
-          }}
-          placeholder="Confirm password"
-          className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3"
-        />
+                      setErrors((prev) => ({
+                        ...prev,
+                        confirmPassword: "",
+                      }));
+                    }}
+                    placeholder="Confirm password"
+                    className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3"
+                  />
 
-        {errors.confirmPassword && (
-          <p className="text-red-500 text-sm mt-1">
-            {errors.confirmPassword}
-          </p>
-        )}
-      </div>
-    </div>
-  </>
-)}
+                  {errors.confirmPassword && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.confirmPassword}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
           {/* Buttons */}
 
           <div className="flex justify-end gap-4 mt-10">

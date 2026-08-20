@@ -14,6 +14,8 @@ import SchoolAdmin_Staff from "../pages/SchoolAdmin/SchoolAdmin_Staff";
 import StaffSalary from "../pages/SchoolAdmin/StaffSalary";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import ResetPassword from "../pages/auth/ResetPassword";
+import Notifications from "../pages/Notifications";
+import NotificationDetails from "../pages/NotificationDetails";
 
 function AppRoutes() {
   return (
@@ -104,6 +106,23 @@ function AppRoutes() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+        <Route
+          path="/admin/notifications"
+          element={
+            <ProtectedRoute allowedRole="1">
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/notifications/:id"
+          element={
+            <ProtectedRoute allowedRole="1">
+              <NotificationDetails />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

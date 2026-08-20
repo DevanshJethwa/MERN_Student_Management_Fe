@@ -20,6 +20,7 @@ import api from "../../api/api";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../../../src/custom-datepicker.css";
+import { toast } from "react-toastify";
 
 function StaffSalary() {
   const navigate = useNavigate();
@@ -298,7 +299,7 @@ function StaffSalary() {
 
             console.log("Payment Verified:", verifyResponse.data);
 
-            alert("Salary paid successfully!");
+            toast.success("Salary paid successfully!");
 
             // Refresh salary data
             await getStaffSalary(id);
@@ -306,7 +307,7 @@ function StaffSalary() {
           } catch (error) {
             console.log("Payment Verification Error:", error);
 
-            alert(
+            toast.error(
               error.response?.data?.message || "Payment verification failed",
             );
           }
